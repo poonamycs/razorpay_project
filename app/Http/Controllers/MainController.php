@@ -11,6 +11,7 @@ use Razorpay\Api\Errors\SignatureVerificationError;
 use Session;
 use Hash;
 use Auth;
+use Date;
 
 class MainController extends Controller
 {
@@ -51,10 +52,15 @@ class MainController extends Controller
         $name = $request->input('name');
         $amount = $request->input('amount');
 
-        $api = new Api('rzp_test_MN6R1553E5RH77', 'gfwZryyZ7Cl0jOuF1hyrwa8y');
-        $order  = $api->order->create(array('receipt' => '123', 'amount' => $amount * 100 , 'currency' => 'INR')); // Creates order
-        $orderId = $order['id']; 
+        // $api = new Api('rzp_test_MN6R1553E5RH77', 'gfwZryyZ7Cl0jOuF1hyrwa8y');
+        // $order  = $api->order->create(array('receipt' => '123', 'amount' => $amount * 100 , 'currency' => 'INR')); // Creates order
+        // $orderId = $order['id']; 
 
+        $api = new Api('rzp_test_MN6R1553E5RH77', 'gfwZryyZ7Cl0jOuF1hyrwa8y');
+        $api->plan->create(array('period' => 'weekly', 'interval' => 1, 'item' => array('name' => 'Test Weekly 1 plan', 'description' => 'Description for the weekly 1 plan', 'amount' => 100, 'currency' => 'INR'),'notes'=> array('key1'=> 'value3','key2'=> 'value2')));
+        $order = $api->subscription->create(array('plan_id' => 'plan_KhN2eI4iFxknkU', 'customer_notify' => 1,'quantity'=>5, 'total_count' => 6, 'start_at' => now(), 'addons' => array(array('item' => array('name' => 'Delivery charges', 'amount' => 100, 'currency' => 'INR'))),'notes'=> array('key1'=> 'value3','key2'=> 'value2')));
+        $orderId = $order['id']; 
+        // echo "<pre>";print_r($orderId);die();
         $user_pay = new Payment();
     
         $user_pay->name = $name;
@@ -63,31 +69,18 @@ class MainController extends Controller
         $user_pay->save();
 
         $data = array(
-            'order_id' => $orderId,
+            // 'order_id' => $orderId,
             'amount' => $amount
         );
 
-        // Session::put('order_id', $orderId);
-        // Session::put('amount' , $amount);
-
-       
         return redirect()->route('home')->with('data', $data);
-
-
-
-
     }
-
-
     public function pay(Request $request){
         $data = $request->all();
         $user = Payment::where('payment_id', $data['razorpay_order_id'])->first();
         $user->payment_done = true;
         $user->razorpay_id = $data['razorpay_payment_id'];
-
         $api = new Api('rzp_test_MN6R1553E5RH77', 'gfwZryyZ7Cl0jOuF1hyrwa8y');
-        
-
         try{
         $attributes = array(
              'razorpay_signature' => $data['razorpay_signature'],
@@ -97,11 +90,8 @@ class MainController extends Controller
         $order = $api->utility->verifyPaymentSignature($attributes);
         $success = true;
     }catch(SignatureVerificationError $e){
-
         $succes = false;
-    }
-
-        
+    } 
     if($success){
         $user->save();
         return redirect('/success');
@@ -109,14 +99,7 @@ class MainController extends Controller
 
         return redirect()->route('error');
     }
-
-      
-
-       
-
     }
-
-
     public function error(){
         return view('error');
     }

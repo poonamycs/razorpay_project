@@ -27,3 +27,5 @@ Route::post('/payment', 'App\Http\Controllers\MainController@payment');
 Route::post('/pay' , 'App\Http\Controllers\MainController@pay');
 Route::get('/error' , 'App\Http\Controllers\MainController@error');
 
+Route::get('/loadmore', 'App\Http\Controllers\BlogController@index');
+Route::post('/loadmore/load_data', 'App\Http\Controllers\BlogController@load_data')->name('loadmore.load_data');
